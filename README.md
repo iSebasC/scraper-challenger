@@ -1,66 +1,66 @@
 # OEFA Scraper
 
-TypeScript scraper that extracts all documents from the OEFA public registry and downloads their associated PDFs.
+Scraper en TypeScript que extrae todos los documentos del registro público de OEFA y descarga los PDFs asociados.
 
-**Target site:** https://publico.oefa.gob.pe/repdig/consulta/consultaTfa.xhtml
+**Sitio objetivo:** https://publico.oefa.gob.pe/repdig/consulta/consultaTfa.xhtml
 
-## How it works
+## Cómo funciona
 
-1. Creates an HTTP session with manual cookie management (no browser automation)
-2. Triggers a JSF/PrimeFaces AJAX search to load all documents
-3. Paginates through all pages (176 pages, ~1760 documents) using PrimeFaces DataTable AJAX
-4. Downloads each PDF via a POST request with the UUID extracted from the page
-5. Handles rate limiting (HTTP 429) with exponential backoff
-6. Saves all extracted data to `output/data.json` and failed downloads to `output/failed.json`
+1. Crea una sesión HTTP con manejo manual de cookies (sin automatización de navegador)
+2. Ejecuta una búsqueda AJAX JSF/PrimeFaces para cargar todos los documentos
+3. Navega por todas las páginas (176 páginas, ~1760 documentos) usando el AJAX del DataTable de PrimeFaces
+4. Descarga cada PDF mediante una petición POST con el UUID extraído de la página
+5. Maneja el rate limiting (HTTP 429) con backoff exponencial
+6. Guarda todos los datos extraídos en `output/data.json` y los fallos en `output/failed.json`
 
-## Tech stack
+## Tecnologías
 
-- **TypeScript** — required, no browser automation libraries
-- **axios** — HTTP requests with manual cookie interceptors
-- **cheerio** — HTML/XML parsing
+- **TypeScript** — obligatorio, sin librerías de automatización de navegador
+- **axios** — peticiones HTTP con interceptors manuales de cookies
+- **cheerio** — parsing de HTML/XML
 
-## Installation
+## Instalación
 
 ```bash
 npm install
 ```
 
-## Usage
+## Ejecución
 
 ```bash
 npm start
 ```
 
-The scraper runs in two phases:
+El scraper corre en dos fases:
 
-- **Phase 1 — Data extraction:** navigates all pages and saves document metadata to `output/data.json`
-- **Phase 2 — PDF download:** downloads PDFs to `output/pdfs/` with a 1s delay between requests
+- **Fase 1 — Extracción de datos:** navega todas las páginas y guarda los metadatos en `output/data.json`
+- **Fase 2 — Descarga de PDFs:** descarga los PDFs en `output/pdfs/` con 1s de espera entre cada petición
 
-Progress is saved every 10 pages. If interrupted, re-running will skip already-downloaded PDFs automatically.
+El progreso se guarda cada 10 páginas. Si se interrumpe, al volver a correr omite automáticamente los PDFs ya descargados.
 
-## Output
+## Salida
 
 ```
 output/
-├── data.json      # all extracted documents (nro, expediente, administrado, unidad, sector, resolucion, pdfUuid)
-├── failed.json    # documents where PDF download failed after retries
-└── pdfs/          # downloaded PDF files
+├── data.json      # todos los documentos extraídos (nro, expediente, administrado, unidad, sector, resolucion, pdfUuid)
+├── failed.json    # documentos donde la descarga del PDF falló tras los reintentos
+└── pdfs/          # archivos PDF descargados
 ```
 
-## Error handling
+## Manejo de errores
 
-- **HTTP 429 (Too Many Requests):** exponential backoff with up to 3 retries (5s → 10s → 20s)
-- **Failed downloads:** logged to `output/failed.json` with timestamp and reason
-- **Already downloaded:** skipped on re-run to avoid redundant requests
-- **Empty pages:** logged and skipped without crashing
+- **HTTP 429 (Too Many Requests):** backoff exponencial con hasta 3 reintentos (5s → 10s → 20s)
+- **Descargas fallidas:** registradas en `output/failed.json` con timestamp y motivo
+- **Ya descargados:** omitidos en ejecuciones posteriores para evitar peticiones redundantes
+- **Páginas vacías:** registradas y omitidas sin interrumpir la ejecución
 
-## Project structure
+## Estructura del proyecto
 
 ```
 src/
-├── types.ts       # TypeScript interfaces
-├── session.ts     # HTTP client with cookie management and ViewState extraction
-├── scraper.ts     # AJAX pagination and document parsing
-├── downloader.ts  # PDF download with retry logic
-└── index.ts       # Orchestration (Phase 1 + Phase 2)
+├── types.ts       # interfaces TypeScript
+├── session.ts     # cliente HTTP con manejo de cookies y extracción del ViewState
+├── scraper.ts     # paginación AJAX y parseo de documentos
+├── downloader.ts  # descarga de PDFs con lógica de reintentos
+└── index.ts       # orquestación (Fase 1 + Fase 2)
 ```
